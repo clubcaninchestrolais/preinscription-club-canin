@@ -15,6 +15,7 @@ with st.form("preinscription_form"):
     prenom = st.text_input("Prénom")
     email = st.text_input("Email")
     telephone = st.text_input("Téléphone")
+
     nom_chien = st.text_input("Nom du chien")
     race_chien = st.text_input("Race du chien")
     age_chien = st.number_input("Âge du chien (en années)", min_value=0, max_value=30)
@@ -24,17 +25,29 @@ with st.form("preinscription_form"):
 # Enregistrement dans Supabase
 if submitted:
     if nom and prenom and email:
-        data = {
+
+        # 1️⃣ Insertion du membre (SANS données du chien)
+        data_membre = {
             "nom": nom,
             "prenom": prenom,
             "email": email,
-            "telephone": telephone,
-            "nom_chien": nom_chien,
-            "race_chien": race_chien,
-            "age_chien": age_chien,
+            "telephone": telephone
         }
 
-        supabase.table("membres").insert(data).execute()
+        response = supabase.table("membres").insert(data_membre).execute()
+        membre_id = response.data[0]["id"]
+
+        # 2️⃣ Insertion du chien uniquement si les champs sont remplis
+        if nom_chien and race_chien and age_chien:
+            data_chien = {
+                "membre_id": membre_id,
+                "nom_chien": nom_chien,
+                "race_chien": race_chien,
+                "age_chien": age_chien
+            }
+            supabase.table("chiens").insert(data_chien).execute()
+
         st.success("Votre préinscription a été envoyée avec succès !")
+
     else:
         st.error("Veuillez remplir au minimum nom, prénom et email.")
