@@ -1,15 +1,14 @@
 import streamlit as st
-from supabase import create_client, Client
+from supabase import create_client
+from datetime import datetime
 
 # Connexion Supabase
-url = st.secrets["supabase_url"]
-key = st.secrets["supabase_key"]
-supabase: Client = create_client(url, key)
+url = st.secrets["SUPABASE_URL"]
+key = st.secrets["SUPABASE_KEY"]
+supabase = create_client(url, key)
 
 st.title("Préinscription au Club Canin")
-st.write("Veuillez remplir le formulaire ci-dessous pour vous préinscrire.")
 
-# Formulaire
 with st.form("preinscription_form"):
     nom = st.text_input("Nom")
     prenom = st.text_input("Prénom")
@@ -18,20 +17,16 @@ with st.form("preinscription_form"):
 
     submitted = st.form_submit_button("Envoyer")
 
-# Enregistrement dans Supabase
 if submitted:
-    if nom and prenom and email:
+    data = {
+        "nom": nom,
+        "prenom": prenom,
+        "email": email,
+        "telephone": telephone,
+        "date_preinscription": datetime.now().isoformat(),
+        "statut": "en_attente"
+    }
 
-        data_membre = {
-            "nom": nom,
-            "prenom": prenom,
-            "email": email,
-            "telephone": telephone
-        }
+    supabase.table("preinscription").insert(data).execute()
 
-        supabase.table("membres").insert(data_membre).execute()
-
-        st.success("Votre préinscription a été envoyée avec succès !")
-
-    else:
-        st.error("Veuillez remplir au minimum nom, prénom et email.")
+    st.success("Votre préinscription a été envoyée avec succès !")
